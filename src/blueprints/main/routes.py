@@ -1,10 +1,15 @@
 import json
 import os
+from datetime import datetime
 from flask import Blueprint, render_template, session, request, send_from_directory, current_app, abort
 from models import Profile, Contact, Project
 
 
 main_bp = Blueprint('main', __name__, template_folder='templates', static_folder='static', static_url_path='/main-static')
+
+
+def _admin_records():
+    return current_app.config.setdefault('ADMIN_CLIENT_RECORDS', [])
 
 
 def _build_content(profile, contacts, projects):
@@ -118,6 +123,20 @@ def contact():
         for p in projects
         if p.preview_image and not p.preview_image.startswith('http')
     ]
+
+    now = datetime.now()
+    records = _admin_records()
+    next_id = max((r['id'] for r in records), default=0) + 1
+    records.append({
+        'id': next_id,
+        'name': request.form.get('name', '').strip(),
+        'phone': request.form.get('phone', '').strip(),
+        'telegram': request.form.get('telegram', '').strip(),
+        'complaint': request.form.get('complaint', '').strip(),
+        'status': 'Новая',
+        'date': now.strftime('%d.%m.%Y %H:%M'),
+        'date_iso': now.isoformat(),
+    })
 
     return render_template(
         'main/index.j2',
