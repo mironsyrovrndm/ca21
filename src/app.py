@@ -1,7 +1,19 @@
 import os
 from importlib import import_module
 from flask import Blueprint, Flask, send_from_directory
+from werkzeug.security import generate_password_hash
+
 from extensions import init_extensions
+from models import User
+from extensions import db
+
+
+def ensure_default_admin() -> None:
+    admin = User.query.filter_by(username='admin').first()
+    if not admin:
+        admin = User(username='admin', password_hash=generate_password_hash('admin99'))
+        db.session.add(admin)
+        db.session.commit()
 
 
 def create_app() -> Flask:
@@ -18,6 +30,7 @@ app = create_app()
 
 with app.app_context():
     init_extensions(app)
+    ensure_default_admin()
     for name in ['main', 'admin']:
         try:
             mod = import_module(f"src.blueprints.{name}.routes")
