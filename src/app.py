@@ -1,5 +1,6 @@
 import os
 from importlib import import_module
+from types import ModuleType
 from flask import Flask, send_from_directory
 from werkzeug.security import generate_password_hash
 
@@ -15,6 +16,17 @@ def ensure_default_admin() -> None:
         db.session.add(admin)
         db.session.commit()
 
+
+
+
+def _import_blueprint_module(name: str) -> ModuleType:
+    errors: list[str] = []
+    for module_path in (f"src.blueprints.{name}.routes", f"blueprints.{name}.routes"):
+        try:
+            return import_module(module_path)
+        except Exception as exc:
+            errors.append(f"{module_path}: {exc}")
+    raise RuntimeError('; '.join(errors))
 
 def create_app() -> Flask:
     _app = Flask(__name__, static_folder='static')
@@ -33,7 +45,7 @@ with app.app_context():
     ensure_default_admin()
     for name in ['main', 'admin']:
         try:
-            bp_module = import_module(f"src.blueprints.{name}.routes")
+            bp_module = _import_blueprint_module(name)
             blueprint = getattr(bp_module, f"{name}_bp", None)
             if blueprint is None:
                 raise RuntimeError(f"Blueprint object '{name}_bp' not found")
