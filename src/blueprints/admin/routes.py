@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime, timedelta
 
@@ -18,7 +19,8 @@ def _get_content(profile, contacts, projects):
     if hero_image:
         hero_image = hero_image.replace('static/', '').replace('uploads/', '')
     about_education = [line.strip() for line in (profile.education or '').split('\n') if line.strip()] if profile else []
-    return {
+
+    defaults = {
         'hero_label': 'Бережная и профессиональная поддержка',
         'hero_title': profile.full_name if profile and profile.full_name else 'Психолог Анна Луиза',
         'hero_text': profile.intro_text if profile and profile.intro_text else 'Помогаю вернуть опору, услышать себя и улучшить качество жизни.',
@@ -53,6 +55,28 @@ def _get_content(profile, contacts, projects):
         'contacts_email': contact_map.get('email', 'hello@luiza-psy.ru'),
         'contacts_telegram': contact_map.get('telegram', '@luiza_psy'),
     }
+
+    profile_json = {}
+    if profile and profile.looking_for:
+        try:
+            loaded = json.loads(profile.looking_for)
+            if isinstance(loaded, dict):
+                profile_json = loaded
+        except json.JSONDecodeError:
+            profile_json = {}
+
+    for key in ('hero_label', 'hero_button', 'about_title', 'products_title', 'clients_title', 'clients_subtitle',
+                'supervision_title', 'supervision_subtitle', 'speaker_title', 'speaker_text', 'speaker_button',
+                'contacts_title', 'contacts_text', 'about_image'):
+        if profile_json.get(key):
+            defaults[key] = profile_json[key]
+
+    for key in ('products', 'clients', 'supervision'):
+        value = profile_json.get(key)
+        if isinstance(value, list) and value:
+            defaults[key] = value
+
+    return defaults
 
 
 def _admin_records():
@@ -141,6 +165,42 @@ def save_content():
             db.session.add(item)
         item.display_text = value
 
+    def _collect_repeatable(prefix, fields):
+        columns = {field: request.form.getlist(f'{prefix}_{field}[]') for field in fields}
+        size = max((len(values) for values in columns.values()), default=0)
+        items = []
+        for idx in range(size):
+            item = {field: (columns[field][idx] if idx < len(columns[field]) else '').strip() for field in fields}
+            if any(item.values()):
+                if 'bullets' in item:
+                    item['bullets'] = [line.strip() for line in item['bullets'].split('\n') if line.strip()]
+                items.append(item)
+        return items
+
+    content_meta = {}
+    for key in ('hero_label', 'hero_button', 'about_title', 'products_title', 'clients_title', 'clients_subtitle',
+                'supervision_title', 'supervision_subtitle', 'speaker_title', 'speaker_text', 'speaker_button',
+                'contacts_title', 'contacts_text'):
+        content_meta[key] = (request.form.get(key) or '').strip()
+
+    existing_meta = {}
+    if profile.looking_for:
+        try:
+            loaded = json.loads(profile.looking_for)
+            if isinstance(loaded, dict):
+                existing_meta = loaded
+        except json.JSONDecodeError:
+            existing_meta = {}
+
+    if existing_meta.get('about_image'):
+        content_meta['about_image'] = existing_meta['about_image']
+
+    content_meta['products'] = _collect_repeatable('products', ('badge', 'title', 'text', 'meta'))
+    content_meta['clients'] = _collect_repeatable('clients', ('title', 'text'))
+    content_meta['supervision'] = _collect_repeatable('supervision', ('title', 'price', 'meta', 'bullets'))
+
+    profile.looking_for = json.dumps(content_meta, ensure_ascii=False)
+
     db.session.commit()
     flash('Контент сохранен', 'success')
     return redirect(url_for('admin.content'))
@@ -213,13 +273,44 @@ def delete_hero():
 @admin_bp.route('/upload-about', methods=['POST'])
 @login_required
 def upload_about():
-    return redirect(url_for('admin.upload_hero'))
+    profile = Profile.query.first() or Profile(full_name='Психолог Анна Луиза')
+    if not profile.id:
+        db.session.add(profile)
+
+    photo = request.files.get('photo')
+    if photo and photo.filename:
+        filename = secure_filename(photo.filename)
+        photo.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+
+        content_meta = {}
+        if profile.looking_for:
+            try:
+                loaded = json.loads(profile.looking_for)
+                if isinstance(loaded, dict):
+                    content_meta = loaded
+            except json.JSONDecodeError:
+                content_meta = {}
+
+        content_meta['about_image'] = filename
+        profile.looking_for = json.dumps(content_meta, ensure_ascii=False)
+        db.session.commit()
+    return redirect(url_for('admin.content'))
 
 
 @admin_bp.route('/delete-about', methods=['POST'])
 @login_required
 def delete_about():
-    return redirect(url_for('admin.delete_hero'))
+    profile = Profile.query.first()
+    if profile and profile.looking_for:
+        try:
+            content_meta = json.loads(profile.looking_for)
+        except json.JSONDecodeError:
+            content_meta = {}
+        if isinstance(content_meta, dict) and content_meta.get('about_image'):
+            content_meta['about_image'] = None
+            profile.looking_for = json.dumps(content_meta, ensure_ascii=False)
+            db.session.commit()
+    return redirect(url_for('admin.content'))
 
 
 @admin_bp.route('/upload-gallery', methods=['POST'])
