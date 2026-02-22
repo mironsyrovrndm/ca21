@@ -2,11 +2,17 @@ import json
 import os
 from datetime import datetime
 from flask import Blueprint, render_template, session, request, send_from_directory, current_app, abort
+from sqlalchemy import inspect
 from models import Profile, Contact, Project, ClientRecord
 from extensions import db
 
 
 main_bp = Blueprint('main', __name__, template_folder='templates', static_folder='static', static_url_path='/main-static')
+
+
+def _ensure_client_records_table():
+    if not inspect(db.engine).has_table('client_records'):
+        ClientRecord.__table__.create(bind=db.engine)
 
 
 def _build_content(profile, contacts, projects):
@@ -112,6 +118,7 @@ def index(lang='ru'):
 
 @main_bp.route('/contact', methods=['POST'])
 def contact():
+    _ensure_client_records_table()
     profile = Profile.query.first()
     contacts = Contact.query.all()
     projects = Project.query.filter_by(is_published=True).order_by(Project.order_num.asc()).all()

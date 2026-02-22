@@ -6,11 +6,17 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, login_user, logout_user, current_user
+from sqlalchemy import inspect
 from extensions import db
 from models import User, Profile, Skill, Experience, Contact, Project, ProjectImage, ClientRecord
 from .forms import ProfileForm, SkillForm, ExperienceForm, ContactForm
 
 admin_bp = Blueprint('admin', __name__, template_folder='templates', static_folder='static', url_prefix='/admin')
+
+
+def _ensure_client_records_table():
+    if not inspect(db.engine).has_table('client_records'):
+        ClientRecord.__table__.create(bind=db.engine)
 
 
 def _get_content(profile, contacts, projects):
@@ -134,6 +140,7 @@ def dashboard_redirect():
 @admin_bp.route('/dashboard')
 @login_required
 def dashboard():
+    _ensure_client_records_table()
     records = ClientRecord.query.order_by(ClientRecord.date_iso.asc()).all()
     now = datetime.now()
     week_threshold = now - timedelta(days=7)
@@ -222,6 +229,7 @@ def save_content():
 @admin_bp.route('/clients')
 @login_required
 def clients():
+    _ensure_client_records_table()
     records = ClientRecord.query.order_by(ClientRecord.date_iso.asc()).all()
     return render_template('admin/clients.j2', records=records, created=False)
 
@@ -229,6 +237,7 @@ def clients():
 @admin_bp.route('/add-client', methods=['POST'])
 @login_required
 def add_client():
+    _ensure_client_records_table()
     date = request.form.get('client_date')
     time = request.form.get('client_time') or '00:00'
     dt = datetime.fromisoformat(f'{date}T{time}')
@@ -249,6 +258,7 @@ def add_client():
 @admin_bp.route('/update-client-status', methods=['POST'])
 @login_required
 def update_client_status():
+    _ensure_client_records_table()
     record_id = int(request.form.get('record_id'))
     new_status = request.form.get('status')
     record = ClientRecord.query.get_or_404(record_id)
