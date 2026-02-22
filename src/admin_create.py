@@ -8,6 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app import app
 from extensions import db
 from models import User
+from werkzeug.security import generate_password_hash
 
 
 def create_admin():
@@ -17,13 +18,13 @@ def create_admin():
 
         if not existing_user:
             # Создаем пользователя (пароль без хеша для простоты, как вы просили)
-            u = User(username='admin', password_hash='admin')
+            u = User(username='admin', password_hash=generate_password_hash('admin99'))
             db.session.add(u)
             db.session.commit()
             print("---------------------------------------------------")
             print("SUCCESS: Admin user created!")
             print("Login: admin")
-            print("Password: admin")
+            print("Password: admin99")
             print("---------------------------------------------------")
         else:
             print("---------------------------------------------------")
