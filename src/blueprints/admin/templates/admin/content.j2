@@ -3,107 +3,141 @@
 {% block header %}Контент сайта{% endblock %}
 {% block content %}
 <section class="admin__panel">
-  <div class="panel__header"><h2>Главная страница</h2><span class="panel__badge">Все блоки</span></div>
+  <div class="panel__header">
+    <h2>Главная страница</h2>
+    <span class="panel__badge">Все блоки</span>
+  </div>
+
   <form class="form-grid form-grid--compact" method="post" action="{{ url_for('admin.save_content') }}">
-    <label>Надзаголовок Hero<input type="text" name="hero_label" value="{{ content.hero_label }}" /></label>
-    <label>Заголовок Hero<input type="text" name="hero_title" value="{{ content.hero_title }}" /></label>
-    <label class="span-2">Текст Hero<textarea name="hero_text" rows="3">{{ content.hero_text }}</textarea></label>
-    <label>Кнопка Hero<input type="text" name="hero_button" value="{{ content.hero_button }}" /></label>
-
-    <label>Заголовок «Обо мне»<input type="text" name="about_title" value="{{ content.about_title }}" /></label>
-    <label class="span-2">Образование (по строкам)<textarea name="about_education" rows="4">{{ content.about_education | join('\n') }}</textarea></label>
-
-    <label>Заголовок продуктов<input type="text" name="products_title" value="{{ content.products_title }}" /></label>
-    <div class="repeatable" data-repeatable>
-      <div class="repeatable__header">
-        <strong>Карточки продуктов</strong>
-        <button class="button button--ghost" type="button" data-add-item>Добавить карточку</button>
-      </div>
-      <div class="repeatable__list">
-        {% for item in content.products %}
-        <div class="repeatable__item" data-repeatable-item>
-          <label>Бейдж<input type="text" name="products_badge[]" value="{{ item.badge }}" /></label>
-          <label>Заголовок<input type="text" name="products_title[]" value="{{ item.title }}" /></label>
-          <label>Текст<textarea name="products_text[]" rows="2">{{ item.text }}</textarea></label>
-          <label>Мета<input type="text" name="products_meta[]" value="{{ item.meta }}" /></label>
-          <button class="button button--ghost" type="button" data-remove-item>Удалить</button>
-        </div>
-        {% endfor %}
-        <template data-repeatable-template>
-          <div class="repeatable__item is-template" data-repeatable-item>
-            <label>Бейдж<input type="text" name="products_badge[]" /></label>
-            <label>Заголовок<input type="text" name="products_title[]" /></label>
-            <label>Текст<textarea name="products_text[]" rows="2"></textarea></label>
-            <label>Мета<input type="text" name="products_meta[]" /></label>
-            <button class="button button--ghost" type="button" data-remove-item>Удалить</button>
-          </div>
-        </template>
+    <div class="content-group">
+      <h3 class="content-group__title">Hero</h3>
+      <div class="form-grid">
+        <label>Надзаголовок Hero<input type="text" name="hero_label" value="{{ content.hero_label }}" /></label>
+        <label>Заголовок Hero<input type="text" name="hero_title" value="{{ content.hero_title }}" /></label>
+        <label class="span-2">Текст Hero<textarea name="hero_text" rows="3">{{ content.hero_text }}</textarea></label>
+        <label>Кнопка Hero<input type="text" name="hero_button" value="{{ content.hero_button }}" /></label>
       </div>
     </div>
 
-    <label>Заголовок «Клиентам»<input type="text" name="clients_title" value="{{ content.clients_title }}" /></label>
-    <label>Подзаголовок «Клиентам»<input type="text" name="clients_subtitle" value="{{ content.clients_subtitle }}" /></label>
-    <div class="repeatable" data-repeatable>
-      <div class="repeatable__header">
-        <strong>Карточки «Клиентам»</strong>
-        <button class="button button--ghost" type="button" data-add-item>Добавить карточку</button>
-      </div>
-      <div class="repeatable__list">
-        {% for item in content.clients %}
-        <div class="repeatable__item" data-repeatable-item>
-          <label>Заголовок<input type="text" name="clients_title[]" value="{{ item.title }}" /></label>
-          <label>Текст<textarea name="clients_text[]" rows="2">{{ item.text }}</textarea></label>
-          <button class="button button--ghost" type="button" data-remove-item>Удалить</button>
-        </div>
-        {% endfor %}
-        <template data-repeatable-template>
-          <div class="repeatable__item is-template" data-repeatable-item>
-            <label>Заголовок<input type="text" name="clients_title[]" /></label>
-            <label>Текст<textarea name="clients_text[]" rows="2"></textarea></label>
-            <button class="button button--ghost" type="button" data-remove-item>Удалить</button>
-          </div>
-        </template>
+    <div class="content-group">
+      <h3 class="content-group__title">Обо мне</h3>
+      <div class="form-grid">
+        <label>Заголовок «Обо мне»<input type="text" name="about_title" value="{{ content.about_title }}" /></label>
+        <label class="span-2">Образование (по строкам)<textarea name="about_education" rows="4">{{ content.about_education | join('\n') }}</textarea></label>
       </div>
     </div>
 
-    <label>Заголовок «Супервизия»<input type="text" name="supervision_title" value="{{ content.supervision_title }}" /></label>
-    <label>Подзаголовок «Супервизия»<input type="text" name="supervision_subtitle" value="{{ content.supervision_subtitle }}" /></label>
-    <div class="repeatable" data-repeatable>
-      <div class="repeatable__header">
-        <strong>Карточки «Супервизия»</strong>
-        <button class="button button--ghost" type="button" data-add-item>Добавить карточку</button>
+    <div class="content-group">
+      <h3 class="content-group__title">Продукты</h3>
+      <div class="form-grid">
+        <label>Заголовок продуктов<input type="text" name="products_title" value="{{ content.products_title }}" /></label>
       </div>
-      <div class="repeatable__list">
-        {% for item in content.supervision %}
-        <div class="repeatable__item" data-repeatable-item>
-          <label>Заголовок<input type="text" name="supervision_title[]" value="{{ item.title }}" /></label>
-          <label>Цена<input type="text" name="supervision_price[]" value="{{ item.price }}" /></label>
-          <label>Мета<input type="text" name="supervision_meta[]" value="{{ item.meta }}" /></label>
-          <label>Пункты (каждый с новой строки)<textarea name="supervision_bullets[]" rows="3">{{ item.bullets | join('\n') }}</textarea></label>
-          <button class="button button--ghost" type="button" data-remove-item>Удалить</button>
+      <div class="repeatable" data-repeatable>
+        <div class="repeatable__header">
+          <strong>Карточки продуктов</strong>
+          <button class="button button--ghost" type="button" data-add-item>Добавить карточку</button>
         </div>
-        {% endfor %}
-        <template data-repeatable-template>
-          <div class="repeatable__item is-template" data-repeatable-item>
-            <label>Заголовок<input type="text" name="supervision_title[]" /></label>
-            <label>Цена<input type="text" name="supervision_price[]" /></label>
-            <label>Мета<input type="text" name="supervision_meta[]" /></label>
-            <label>Пункты (каждый с новой строки)<textarea name="supervision_bullets[]" rows="3"></textarea></label>
+        <div class="repeatable__list">
+          {% for item in content.products %}
+          <div class="repeatable__item" data-repeatable-item>
+            <label>Бейдж<input type="text" name="products_badge[]" value="{{ item.badge }}" /></label>
+            <label>Заголовок<input type="text" name="products_title[]" value="{{ item.title }}" /></label>
+            <label>Текст<textarea name="products_text[]" rows="2">{{ item.text }}</textarea></label>
+            <label>Мета<input type="text" name="products_meta[]" value="{{ item.meta }}" /></label>
             <button class="button button--ghost" type="button" data-remove-item>Удалить</button>
           </div>
-        </template>
+          {% endfor %}
+          <template data-repeatable-template>
+            <div class="repeatable__item is-template" data-repeatable-item>
+              <label>Бейдж<input type="text" name="products_badge[]" /></label>
+              <label>Заголовок<input type="text" name="products_title[]" /></label>
+              <label>Текст<textarea name="products_text[]" rows="2"></textarea></label>
+              <label>Мета<input type="text" name="products_meta[]" /></label>
+              <button class="button button--ghost" type="button" data-remove-item>Удалить</button>
+            </div>
+          </template>
+        </div>
       </div>
     </div>
 
-    <label>Заголовок спикера<input type="text" name="speaker_title" value="{{ content.speaker_title }}" /></label>
-    <label>Кнопка спикера<input type="text" name="speaker_button" value="{{ content.speaker_button }}" /></label>
-    <label class="span-2">Текст спикера<textarea name="speaker_text" rows="2">{{ content.speaker_text }}</textarea></label>
+    <div class="content-group">
+      <h3 class="content-group__title">Клиентам</h3>
+      <div class="form-grid">
+        <label>Заголовок «Клиентам»<input type="text" name="clients_title" value="{{ content.clients_title }}" /></label>
+        <label>Подзаголовок «Клиентам»<input type="text" name="clients_subtitle" value="{{ content.clients_subtitle }}" /></label>
+      </div>
+      <div class="repeatable" data-repeatable>
+        <div class="repeatable__header">
+          <strong>Карточки «Клиентам»</strong>
+          <button class="button button--ghost" type="button" data-add-item>Добавить карточку</button>
+        </div>
+        <div class="repeatable__list">
+          {% for item in content.clients %}
+          <div class="repeatable__item" data-repeatable-item>
+            <label>Заголовок<input type="text" name="clients_title[]" value="{{ item.title }}" /></label>
+            <label>Текст<textarea name="clients_text[]" rows="2">{{ item.text }}</textarea></label>
+            <button class="button button--ghost" type="button" data-remove-item>Удалить</button>
+          </div>
+          {% endfor %}
+          <template data-repeatable-template>
+            <div class="repeatable__item is-template" data-repeatable-item>
+              <label>Заголовок<input type="text" name="clients_title[]" /></label>
+              <label>Текст<textarea name="clients_text[]" rows="2"></textarea></label>
+              <button class="button button--ghost" type="button" data-remove-item>Удалить</button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
 
-    <label>Заголовок контактов<input type="text" name="contacts_title" value="{{ content.contacts_title }}" /></label>
-    <label class="span-2">Текст контактов<textarea name="contacts_text" rows="2">{{ content.contacts_text }}</textarea></label>
-    <label>Телефон<input type="text" name="contacts_phone" value="{{ content.contacts_phone }}" /></label>
-    <label>Почта<input type="email" name="contacts_email" value="{{ content.contacts_email }}" /></label>
-    <label>Telegram<input type="text" name="contacts_telegram" value="{{ content.contacts_telegram }}" /></label>
+    <div class="content-group">
+      <h3 class="content-group__title">Супервизия</h3>
+      <div class="form-grid">
+        <label>Заголовок «Супервизия»<input type="text" name="supervision_title" value="{{ content.supervision_title }}" /></label>
+        <label>Подзаголовок «Супервизия»<input type="text" name="supervision_subtitle" value="{{ content.supervision_subtitle }}" /></label>
+      </div>
+      <div class="repeatable" data-repeatable>
+        <div class="repeatable__header">
+          <strong>Карточки «Супервизия»</strong>
+          <button class="button button--ghost" type="button" data-add-item>Добавить карточку</button>
+        </div>
+        <div class="repeatable__list">
+          {% for item in content.supervision %}
+          <div class="repeatable__item" data-repeatable-item>
+            <label>Заголовок<input type="text" name="supervision_title[]" value="{{ item.title }}" /></label>
+            <label>Цена<input type="text" name="supervision_price[]" value="{{ item.price }}" /></label>
+            <label>Мета<input type="text" name="supervision_meta[]" value="{{ item.meta }}" /></label>
+            <label>Пункты (каждый с новой строки)<textarea name="supervision_bullets[]" rows="3">{{ item.bullets | join('\n') }}</textarea></label>
+            <button class="button button--ghost" type="button" data-remove-item>Удалить</button>
+          </div>
+          {% endfor %}
+          <template data-repeatable-template>
+            <div class="repeatable__item is-template" data-repeatable-item>
+              <label>Заголовок<input type="text" name="supervision_title[]" /></label>
+              <label>Цена<input type="text" name="supervision_price[]" /></label>
+              <label>Мета<input type="text" name="supervision_meta[]" /></label>
+              <label>Пункты (каждый с новой строки)<textarea name="supervision_bullets[]" rows="3"></textarea></label>
+              <button class="button button--ghost" type="button" data-remove-item>Удалить</button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-group">
+      <h3 class="content-group__title">Спикер и контакты</h3>
+      <div class="form-grid">
+        <label>Заголовок спикера<input type="text" name="speaker_title" value="{{ content.speaker_title }}" /></label>
+        <label>Кнопка спикера<input type="text" name="speaker_button" value="{{ content.speaker_button }}" /></label>
+        <label class="span-2">Текст спикера<textarea name="speaker_text" rows="2">{{ content.speaker_text }}</textarea></label>
+
+        <label>Заголовок контактов<input type="text" name="contacts_title" value="{{ content.contacts_title }}" /></label>
+        <label class="span-2">Текст контактов<textarea name="contacts_text" rows="2">{{ content.contacts_text }}</textarea></label>
+        <label>Телефон<input type="text" name="contacts_phone" value="{{ content.contacts_phone }}" /></label>
+        <label>Почта<input type="email" name="contacts_email" value="{{ content.contacts_email }}" /></label>
+        <label>Telegram<input type="text" name="contacts_telegram" value="{{ content.contacts_telegram }}" /></label>
+      </div>
+    </div>
 
     <div class="form-grid__actions"><button class="button" type="submit">Сохранить контент</button></div>
   </form>
@@ -129,10 +163,5 @@
   {% if content.about_image %}
   <div class="gallery"><div class="gallery__item"><img src="{{ url_for('main.media', category='about', photo_id=content.about_image) }}" alt="About" /><span>{{ content.about_image }}</span><form method="post" action="{{ url_for('admin.delete_about') }}"><button class="button button--ghost" type="submit">Удалить</button></form></div></div>
   {% else %}<p class="muted">Фото для блока «Обо мне» пока не загружено.</p>{% endif %}
-</section>
-
-<section class="admin__panel">
-  <div class="panel__header"><h2>Галерея</h2><span class="panel__badge">Загрузка в галерею</span></div>
-  <form class="form-grid form-grid--compact" method="post" action="{{ url_for('admin.upload_gallery') }}" enctype="multipart/form-data"><label>Загрузить фото (можно несколько)<input type="file" name="photo" accept="image/*" multiple required /></label><div class="form-grid__actions"><button class="button" type="submit">Загрузить</button></div></form>{% if uploads %}<div class="gallery">{% for image in uploads %}<div class="gallery__item"><img src="{{ url_for('main.media', category='uploads', photo_id=image) }}" alt="Загруженное фото" /><span>{{ image }}</span><form method="post" action="{{ url_for('admin.delete_gallery') }}"><input type="hidden" name="filename" value="{{ image }}" /><button class="button button--ghost" type="submit">Удалить</button></form></div>{% endfor %}</div>{% else %}<p class="muted">Фотографий пока нет.</p>{% endif %}
 </section>
 {% endblock %}

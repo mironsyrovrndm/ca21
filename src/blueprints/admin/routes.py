@@ -153,11 +153,7 @@ def content():
     profile = Profile.query.first()
     contacts = Contact.query.all()
     projects = Project.query.filter_by(is_published=True).order_by(Project.order_num.asc()).all()
-    upload_folder = current_app.config['UPLOAD_FOLDER']
-    uploads = []
-    if os.path.isdir(upload_folder):
-        uploads = sorted([f for f in os.listdir(upload_folder) if os.path.isfile(os.path.join(upload_folder, f))])
-    return render_template('admin/content.j2', content=_get_content(profile, contacts, projects), uploads=uploads)
+    return render_template('admin/content.j2', content=_get_content(profile, contacts, projects))
 
 
 @admin_bp.route('/save-content', methods=['POST'])
@@ -340,26 +336,6 @@ def delete_about():
         db.session.commit()
     return redirect(url_for('admin.content'))
 
-
-@admin_bp.route('/upload-gallery', methods=['POST'])
-@login_required
-def upload_gallery():
-    photos = request.files.getlist('photo')
-    for photo in photos:
-        if photo and photo.filename:
-            filename = secure_filename(photo.filename)
-            photo.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-    return redirect(url_for('admin.content'))
-
-
-@admin_bp.route('/delete-gallery', methods=['POST'])
-@login_required
-def delete_gallery():
-    filename = (request.form.get('filename') or '').replace('..', '')
-    path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-    if os.path.exists(path):
-        os.remove(path)
-    return redirect(url_for('admin.content'))
 
 
 # === legacy routes kept ===

@@ -489,6 +489,27 @@ textarea {
   min-height: 80px;
 }
 
+
+
+/* ================= CONTENT GROUPS ================= */
+
+.content-group {
+  grid-column: 1 / -1;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  background: #fcfbff;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.content-group__title {
+  font-size: 0.95rem;
+  color: var(--primary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 /* ================= REPEATABLE ================= */
 
 .repeatable {
@@ -510,7 +531,7 @@ textarea {
 
 .repeatable__item {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
   padding: 18px;
   border: 1px solid var(--border-soft);
@@ -519,8 +540,9 @@ textarea {
 }
 
 .repeatable__item .button--ghost {
-  align-self: center;
-  justify-self: start;
+  align-self: end;
+  justify-self: end;
+  margin-top: 8px;
 }
 
 /* ================= GALLERY ================= */
