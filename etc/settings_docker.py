@@ -1,0 +1,10 @@
+# Docker's override config
+
+DEBUG = True
+
+ADMIN_PASSWORD = "123123"
+
+# === SQLAlchemy ===
+SQLALCHEMY_DATABASE_URI = "postgresql://luiza:luiza@luiza-db:5432/luiza"
+
+UPLOAD_FOLDER = "/uploads"
