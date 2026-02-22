@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, login_user, logout_user, current_user
 from extensions import db
-from models import User, Profile, Skill, Experience, Contact, Project, ProjectImage
+from models import User, Profile, Skill, Experience, Contact, Project, ProjectImage, ClientRecord
 from .forms import ProfileForm, SkillForm, ExperienceForm, ContactForm
 
 admin_bp = Blueprint('admin', __name__, template_folder='templates', static_folder='static', url_prefix='/admin')
@@ -82,10 +82,6 @@ def _get_content(profile, contacts, projects):
     return defaults
 
 
-def _admin_records():
-    current = current_app.config.setdefault('ADMIN_CLIENT_RECORDS', [])
-    return current
-
 
 def _ensure_admin_user():
     user = User.query.filter_by(username='admin').first()
@@ -138,11 +134,11 @@ def dashboard_redirect():
 @admin_bp.route('/dashboard')
 @login_required
 def dashboard():
-    records = _admin_records()
+    records = ClientRecord.query.order_by(ClientRecord.date_iso.asc()).all()
     now = datetime.now()
     week_threshold = now - timedelta(days=7)
-    week_total = sum(1 for r in records if datetime.fromisoformat(r['date_iso']) >= week_threshold)
-    upcoming = sorted([r for r in records if datetime.fromisoformat(r['date_iso']) >= now], key=lambda x: x['date_iso'])[:5]
+    week_total = sum(1 for r in records if r.date_iso >= week_threshold)
+    upcoming = [r for r in records if r.date_iso >= now][:5]
     stats = {'week_total': week_total, 'upcoming_total': len(upcoming), 'total': len(records)}
     return render_template('admin/dashboard.j2', stats=stats, upcoming=upcoming)
 
@@ -226,7 +222,8 @@ def save_content():
 @admin_bp.route('/clients')
 @login_required
 def clients():
-    return render_template('admin/clients.j2', records=sorted(_admin_records(), key=lambda x: x['date_iso']), created=False)
+    records = ClientRecord.query.order_by(ClientRecord.date_iso.asc()).all()
+    return render_template('admin/clients.j2', records=records, created=False)
 
 
 @admin_bp.route('/add-client', methods=['POST'])
@@ -235,19 +232,18 @@ def add_client():
     date = request.form.get('client_date')
     time = request.form.get('client_time') or '00:00'
     dt = datetime.fromisoformat(f'{date}T{time}')
-    records = _admin_records()
-    next_id = max((r['id'] for r in records), default=0) + 1
-    records.append({
-        'id': next_id,
-        'name': request.form.get('client_name', ''),
-        'phone': request.form.get('client_phone', ''),
-        'telegram': request.form.get('client_telegram', ''),
-        'complaint': request.form.get('client_complaint', ''),
-        'status': 'Новая',
-        'date': dt.strftime('%d.%m.%Y %H:%M'),
-        'date_iso': dt.isoformat(),
-    })
-    return render_template('admin/clients.j2', records=sorted(records, key=lambda x: x['date_iso']), created=True)
+    record = ClientRecord(
+        name=request.form.get('client_name', '').strip(),
+        phone=request.form.get('client_phone', '').strip(),
+        telegram=request.form.get('client_telegram', '').strip(),
+        complaint=request.form.get('client_complaint', '').strip(),
+        status='Новая',
+        date_iso=dt,
+    )
+    db.session.add(record)
+    db.session.commit()
+    records = ClientRecord.query.order_by(ClientRecord.date_iso.asc()).all()
+    return render_template('admin/clients.j2', records=records, created=True)
 
 
 @admin_bp.route('/update-client-status', methods=['POST'])
@@ -255,10 +251,9 @@ def add_client():
 def update_client_status():
     record_id = int(request.form.get('record_id'))
     new_status = request.form.get('status')
-    for record in _admin_records():
-        if record['id'] == record_id:
-            record['status'] = new_status
-            break
+    record = ClientRecord.query.get_or_404(record_id)
+    record.status = new_status
+    db.session.commit()
     return redirect(url_for('admin.clients'))
 
 

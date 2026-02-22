@@ -60,6 +60,25 @@ class Contact(db.Model):
     display_text = db.Column(db.String(100))  # "ninaart..."
 
 
+# Заявки с формы контактов
+class ClientRecord(db.Model):
+    __tablename__ = 'client_records'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False, default='')
+    phone = db.Column(db.String(64), nullable=False, default='')
+    telegram = db.Column(db.String(120), nullable=True)
+    complaint = db.Column(db.Text, nullable=False, default='')
+    status = db.Column(db.String(40), nullable=False, default='Новая')
+    date_iso = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    @property
+    def date(self):
+        return self.date_iso.strftime('%d.%m.%Y %H:%M') if self.date_iso else ''
+
+
+
+
 # Проекты
 class Project(db.Model):
     __tablename__ = 'projects'
