@@ -1,7 +1,7 @@
 import os
 from importlib import import_module
 from flask import Blueprint, Flask, send_from_directory
-from extensions import init_extensions
+from extensions import init_extensions, db
 
 
 def create_app() -> Flask:
@@ -18,6 +18,7 @@ app = create_app()
 
 with app.app_context():
     init_extensions(app)
+    db.create_all()
     for name in ['main', 'admin']:
         try:
             mod = import_module(f"src.blueprints.{name}.routes")

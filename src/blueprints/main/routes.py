@@ -1,9 +1,18 @@
+import json
 import os
+from datetime import datetime
 from flask import Blueprint, render_template, session, request, send_from_directory, current_app, abort
-from models import Profile, Contact, Project
+from sqlalchemy import inspect
+from models import Profile, Contact, Project, ClientRecord
+from extensions import db
 
 
 main_bp = Blueprint('main', __name__, template_folder='templates', static_folder='static', static_url_path='/main-static')
+
+
+def _ensure_client_records_table():
+    if not inspect(db.engine).has_table('client_records'):
+        ClientRecord.__table__.create(bind=db.engine)
 
 
 def _build_content(profile, contacts, projects):
@@ -27,13 +36,13 @@ def _build_content(profile, contacts, projects):
         for p in projects[:6]
     ]
 
-    return {
+    data = {
         'hero_label': 'Бережная и профессиональная поддержка',
         'hero_title': profile.full_name if profile and profile.full_name else 'Психолог Анна Луиза',
         'hero_text': profile.intro_text if profile and profile.intro_text else 'Помогаю вернуть опору, услышать себя и улучшить качество жизни.',
         'hero_button': 'Записаться на консультацию',
         'hero_image': hero_image,
-        'about_image': hero_image,
+        'about_image': None,
         'about_title': 'Обо мне',
         'about_education': about_education or ['Высшее психологическое образование', 'Дополнительная подготовка по психотерапии'],
         'products_title': 'Продукты',
@@ -63,6 +72,28 @@ def _build_content(profile, contacts, projects):
         'contacts_telegram': contact_map.get('telegram', '@luiza_psy'),
     }
 
+    if profile and profile.looking_for:
+        try:
+            meta = json.loads(profile.looking_for)
+        except json.JSONDecodeError:
+            meta = None
+        if isinstance(meta, dict):
+            for key in ('hero_label', 'hero_button', 'about_title', 'products_title', 'clients_title', 'clients_subtitle',
+                        'supervision_title', 'supervision_subtitle', 'speaker_title', 'speaker_text', 'speaker_button',
+                        'contacts_title', 'contacts_text', 'about_image'):
+                if meta.get(key):
+                    data[key] = meta[key]
+
+            for key in ('products', 'clients', 'supervision'):
+                value = meta.get(key)
+                if isinstance(value, list) and value:
+                    data[key] = value
+
+    if profile and profile.specialization and not data.get('about_image'):
+        data['about_image'] = profile.specialization.replace('static/', '').replace('uploads/', '')
+
+    return data
+
 
 @main_bp.route('/')
 @main_bp.route('/<lang>/')
@@ -87,6 +118,7 @@ def index(lang='ru'):
 
 @main_bp.route('/contact', methods=['POST'])
 def contact():
+    _ensure_client_records_table()
     profile = Profile.query.first()
     contacts = Contact.query.all()
     projects = Project.query.filter_by(is_published=True).order_by(Project.order_num.asc()).all()
@@ -95,6 +127,17 @@ def contact():
         for p in projects
         if p.preview_image and not p.preview_image.startswith('http')
     ]
+
+    record = ClientRecord(
+        name=request.form.get('name', '').strip(),
+        phone=request.form.get('phone', '').strip(),
+        telegram=request.form.get('telegram', '').strip(),
+        complaint=request.form.get('complaint', '').strip(),
+        status='Новая',
+        date_iso=datetime.now(),
+    )
+    db.session.add(record)
+    db.session.commit()
 
     return render_template(
         'main/index.j2',
