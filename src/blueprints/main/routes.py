@@ -1,3 +1,4 @@
+import json
 import os
 from flask import Blueprint, render_template, session, request, send_from_directory, current_app, abort
 from models import Profile, Contact, Project
@@ -33,7 +34,7 @@ def _build_content(profile, contacts, projects):
         'hero_text': profile.intro_text if profile and profile.intro_text else 'Помогаю вернуть опору, услышать себя и улучшить качество жизни.',
         'hero_button': 'Записаться на консультацию',
         'hero_image': hero_image,
-        'about_image': hero_image,
+        'about_image': None,
         'about_title': 'Обо мне',
         'about_education': about_education or ['Высшее психологическое образование', 'Дополнительная подготовка по психотерапии'],
         'products_title': 'Продукты',
@@ -63,15 +64,25 @@ def _build_content(profile, contacts, projects):
         'contacts_telegram': contact_map.get('telegram', '@luiza_psy'),
     }
 
-    if profile and profile.specialization:
-        data['about_image'] = profile.specialization.replace('static/', '').replace('uploads/', '')
+    if profile and profile.looking_for:
+        try:
+            meta = json.loads(profile.looking_for)
+        except json.JSONDecodeError:
+            meta = None
+        if isinstance(meta, dict):
+            for key in ('hero_label', 'hero_button', 'about_title', 'products_title', 'clients_title', 'clients_subtitle',
+                        'supervision_title', 'supervision_subtitle', 'speaker_title', 'speaker_text', 'speaker_button',
+                        'contacts_title', 'contacts_text', 'about_image'):
+                if meta.get(key):
+                    data[key] = meta[key]
 
-    if profile and profile.skill_title_design:
-        data['hero_label'] = profile.skill_title_design
-    if profile and profile.skill_title_video:
-        data['hero_button'] = profile.skill_title_video
-    if profile and profile.skill_title_soft:
-        data['about_title'] = profile.skill_title_soft
+            for key in ('products', 'clients', 'supervision'):
+                value = meta.get(key)
+                if isinstance(value, list) and value:
+                    data[key] = value
+
+    if profile and profile.specialization and not data.get('about_image'):
+        data['about_image'] = profile.specialization.replace('static/', '').replace('uploads/', '')
 
     return data
 
