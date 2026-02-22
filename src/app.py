@@ -1,6 +1,6 @@
 import os
 from importlib import import_module
-from flask import Blueprint, Flask, send_from_directory
+from flask import Flask, send_from_directory
 from werkzeug.security import generate_password_hash
 
 from extensions import init_extensions
@@ -33,11 +33,11 @@ with app.app_context():
     ensure_default_admin()
     for name in ['main', 'admin']:
         try:
-            mod = import_module(f"src.blueprints.{name}.routes")
-            for item in vars(mod).values():
-                if isinstance(item, Blueprint):
-                    app.register_blueprint(item)
-                    break
+            bp_module = import_module(f"src.blueprints.{name}.routes")
+            blueprint = getattr(bp_module, f"{name}_bp", None)
+            if blueprint is None:
+                raise RuntimeError(f"Blueprint object '{name}_bp' not found")
+            app.register_blueprint(blueprint)
         except Exception as e:
             print(f"Error loading {name}: {e}")
 
